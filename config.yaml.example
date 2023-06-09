@@ -1,0 +1,10 @@
+# Configuration for Certstat
+
+mqtt:
+    broker: 127.0.0.1
+    port: 1883
+    username: mymqttusername        # Login to broker. Delete if not required
+    password: mymqttpassword        # Login to broker. Delete if not required
+    topic_prefix: certstat/$HOSTNAME   # Topic prefix; $HOSTNAME will be replaced by the actual hostname
+    retain: true
+    qos: 1
