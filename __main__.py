@@ -6,14 +6,13 @@ import re
 
 import yaml
 import paho.mqtt.publish as mqtt_publish
+import jc
 
 
-def get_certificate_expiry():
-    output = subprocess.check_output(["certbot", "certificates"])
-    certificate_info = re.findall(r"Certificate Name:.*\n\s+Expiry Date: (.*)\n", output.decode())
-    if certificate_info:
-        expiry_date = certificate_info[0]
-        return expiry_date
+def get_certificate_info():
+    output = subprocess.check_output(["certbot", "certificates"], text=True)
+    certs = jc.parse('certbot', output)
+    return certs['certificates']
 
 
 def calculate_days_until_expiry(expiry_date):
@@ -65,7 +64,10 @@ base_topic = config["mqtt"]["topic_prefix"]
 base_topic = base_topic.replace("$HOSTNAME", hostname)
 
 # get certificate info
-expiry_date = get_certificate_expiry()
+certs = get_certificate_info()
+print(certs)
+exit()
+
 remaining_days = calculate_days_until_expiry(expiry_date)
 
 mqtt_topic_expiry = "certificate/expiry"
