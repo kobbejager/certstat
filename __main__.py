@@ -15,10 +15,17 @@ def get_certificate_info():
 
 
 def publish_to_mqtt(cert):
-    print(f'Publish info for {cert["name"]} to MQTT')
+    name = cert['name']
+    msg = {
+        'name': cert['name'],
+        'domains': cert['domains'],
+        'expiration_date': cert['expiration_date_iso'],
+        'validity': cert['validity']
+    }
+    print(f'Publish info for {name} to MQTT')
     mqtt_publish.single(
-        topic=f'{config["mqtt"]["topic_prefix"]}/{cert["name"]}', 
-        payload=json.dumps(cert), 
+        topic=f'{config["mqtt"]["topic_prefix"]}/{name}', 
+        payload=json.dumps(msg), 
         qos=config["mqtt"]["qos"], 
         retain=config["mqtt"]["retain"],
         hostname=config["mqtt"]["broker"], 
