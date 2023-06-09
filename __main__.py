@@ -1,8 +1,7 @@
 import socket
 import subprocess
 import argparse
-from datetime import datetime
-import re
+import json
 
 import yaml
 import paho.mqtt.publish as mqtt_publish
@@ -15,11 +14,15 @@ def get_certificate_info():
     return certs['certificates']
 
 
-def calculate_days_until_expiry(expiry_date):
-    expiry_datetime = datetime.strptime(expiry_date, "%Y-%m-%dT%H:%M:%S%z")
-    current_datetime = datetime.utcnow()
-    remaining_days = (expiry_datetime - current_datetime).days
-    return remaining_days
+def publish_to_mqtt(cert):
+    print(f'Publish info for {cert["name"]} to MQTT')
+    mqtt_publish.single(
+        topic=f'{config["mqtt"]["topic_prefix"]}/{cert["name"]}', 
+        payload=json.dumps(cert), 
+        qos=config["mqtt"]["qos"], 
+        retain=config["mqtt"]["retain"],
+        hostname=config["mqtt"]["broker"], 
+        auth={'username': config["mqtt"]["username"], 'password': config["mqtt"]["password"]})
 
 
 def load_config(config_file):
@@ -65,25 +68,6 @@ base_topic = base_topic.replace("$HOSTNAME", hostname)
 
 # get certificate info
 certs = get_certificate_info()
-print(certs)
-exit()
 
-remaining_days = calculate_days_until_expiry(expiry_date)
-
-mqtt_topic_expiry = "certificate/expiry"
-mqtt_topic_days = "certificate/days"
-
-mqtt_publish.single(
-    topic=config["mqtt"]["topic_prefix"] + "/expiry_date", 
-    payload=expiry_date, 
-    qos=config["mqtt"]["qos"], 
-    retain=config["mqtt"]["retain"],
-    hostname=config["mqtt"]["broker"], 
-    auth={'username': config["mqtt"]["username"], 'password': config["mqtt"]["password"]})
-mqtt_publish.single(
-    topic=config["mqtt"]["topic_prefix"] + "/remaining_days", 
-    payload=str(remaining_days), 
-    qos=config["mqtt"]["qos"], 
-    retain=config["mqtt"]["retain"],
-    hostname=config["mqtt"]["broker"], 
-    auth={'username': config["mqtt"]["username"], 'password': config["mqtt"]["password"]})
+for cert in certs:
+    publish_to_mqtt(cert)
